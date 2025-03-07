@@ -11,3 +11,6 @@ namespace api_psp.Models
         public DbSet<Jugador> Jugadores { get; set; }
     }
 }
+
+
+

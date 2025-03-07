@@ -99,6 +99,19 @@ namespace api_psp.Controllers
             return NoContent();
         }
 
+
+        [HttpGet("top5")]
+        public async Task<ActionResult<IEnumerable<Jugador>>> GetTop5Jugadores()
+        {
+            var top5 = await _context.Jugadores
+                .OrderByDescending(j => j.Puntuacion) // Ordena de mayor a menor puntuación
+                .Take(5) // Obtiene solo los 5 mejores
+                .ToListAsync();
+
+            return Ok(top5);
+        }
+
+
         private bool JugadorExists(long id)
         {
             return _context.Jugadores.Any(e => e.Id == id);
