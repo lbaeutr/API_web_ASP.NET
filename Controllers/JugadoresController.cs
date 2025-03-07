@@ -1,11 +1,6 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using api_psp.Models;
+using api_psp.Services;
+using Microsoft.AspNetCore.Mvc;
 
 namespace api_psp.Controllers
 {
@@ -13,108 +8,60 @@ namespace api_psp.Controllers
     [ApiController]
     public class JugadoresController : ControllerBase
     {
-        private readonly JugadorContext _context;
+        private readonly JugadorService _jugadorService;
 
-        public JugadoresController(JugadorContext context)
+        public JugadoresController(JugadorService jugadorService)
         {
-            _context = context;
+            _jugadorService = jugadorService;
         }
 
-        // GET: api/Jugadores
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Jugador>>> GetJugadores()
+        public async Task<ActionResult<List<Jugador>>> GetJugadores()
         {
-            return await _context.Jugadores.ToListAsync();
+            var jugadores = await _jugadorService.GetAllAsync();
+            return Ok(jugadores);
         }
-
-        // GET: api/Jugadores/5
-        [HttpGet("{id}")]
-        public async Task<ActionResult<Jugador>> GetJugador(long id)
-        {
-            var jugador = await _context.Jugadores.FindAsync(id);
-
-            if (jugador == null)
-            {
-                return NotFound();
-            }
-
-            return jugador;
-        }
-
-        // PUT: api/Jugadores/5
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPut("{id}")]
-        public async Task<IActionResult> PutJugador(long id, Jugador jugador)
-        {
-            if (id != jugador.Id)
-            {
-                return BadRequest();
-            }
-
-            _context.Entry(jugador).State = EntityState.Modified;
-
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!JugadorExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
-            }
-
-            return NoContent();
-        }
-
-        // POST: api/Jugadores
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPost]
-        public async Task<ActionResult<Jugador>> PostJugador(Jugador jugador)
-        {
-            _context.Jugadores.Add(jugador);
-            await _context.SaveChangesAsync();
-
-            return CreatedAtAction("GetJugador", new { id = jugador.Id }, jugador);
-        }
-
-        // DELETE: api/Jugadores/5
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteJugador(long id)
-        {
-            var jugador = await _context.Jugadores.FindAsync(id);
-            if (jugador == null)
-            {
-                return NotFound();
-            }
-
-            _context.Jugadores.Remove(jugador);
-            await _context.SaveChangesAsync();
-
-            return NoContent();
-        }
-
 
         [HttpGet("top5")]
-        public async Task<ActionResult<IEnumerable<Jugador>>> GetTop5Jugadores()
+        public async Task<ActionResult<List<Jugador>>> GetTop5()
         {
-            var top5 = await _context.Jugadores
-                .OrderByDescending(j => j.Puntuacion) // Ordena de mayor a menor puntuación
-                .Take(5) // Obtiene solo los 5 mejores
-                .ToListAsync();
-
-            return Ok(top5);
+            var jugadores = await _jugadorService.GetTop5JugadoresAsync();
+            return Ok(jugadores);
         }
 
-
-        private bool JugadorExists(long id)
+        [HttpGet("{id}")]
+        public async Task<ActionResult<Jugador>> GetJugador(string id)
         {
-            return _context.Jugadores.Any(e => e.Id == id);
+            var jugador = await _jugadorService.GetByIdAsync(id);
+            if (jugador == null) return NotFound();
+            return Ok(jugador);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> CrearJugador(Jugador jugador)
+        {
+            await _jugadorService.CreateAsync(jugador);
+            return CreatedAtAction(nameof(GetJugador), new { id = jugador.Id }, jugador);
+        }
+
+        [HttpPut("{id}")]
+        public async Task<IActionResult> ActualizarJugador(string id, Jugador jugador)
+        {
+            var existingJugador = await _jugadorService.GetByIdAsync(id);
+            if (existingJugador == null) return NotFound();
+
+            await _jugadorService.UpdateAsync(id, jugador);
+            return NoContent();
+        }
+
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> EliminarJugador(string id)
+        {
+            var jugador = await _jugadorService.GetByIdAsync(id);
+            if (jugador == null) return NotFound();
+
+            await _jugadorService.DeleteAsync(id);
+            return NoContent();
         }
     }
 }

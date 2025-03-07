@@ -1,10 +1,18 @@
 using Microsoft.EntityFrameworkCore;
-using api_psp.Models;  // Asegúrate de usar el namespace correcto
+using api_psp.Models; 
+using api_psp.Services;
+using api_psp.Settings;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Configuracion MongoDB 
+builder.Services.Configure<MongoDBSettings>(
+    builder.Configuration.GetSection("MongoDB"));
+
+builder.Services.AddSingleton<JugadorService>(); // Inyectamos el servicio
 // Registra el servicio de controladores
 builder.Services.AddControllers();
+
 
 // Registra el DbContext usando la base de datos en memoria
 builder.Services.AddDbContext<JugadorContext>(opt =>
